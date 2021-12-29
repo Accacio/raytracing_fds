@@ -2,3 +2,4 @@
 
 * Criando Imagem [[https://youtu.be/EYPYZ4w6440]]
 * Makefile [[https://youtu.be/5rhAZyc7YAo]]
+* Cores e Vetores [[https://youtu.be/XctaCbkwUfs]]
