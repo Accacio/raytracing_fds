@@ -5,7 +5,7 @@
 all: raytracer output.ppm
 
 raytracer: raytracer.c
-	cc raytracer.c -o raytracer
+	cc raytracer.c -lm -o raytracer
 
 .PHONY: run clean view
 
