@@ -7,6 +7,7 @@ int main(int argc, char *argv[]) {
     printf("%d %d 255\n",width,height);
 
     for (int i = height-1; i >= 0; i--) {
+        fprintf(stderr,"Remaining %d\n",i);
         for (int j = 0; j < width; j++) {
             double r,g,b;
             int ir,ig,ib;
@@ -21,5 +22,7 @@ int main(int argc, char *argv[]) {
             printf("%d %d %d\n",ir,ig,ib);
         }
     }
+    fprintf(stderr,"Done\n");
+
     return 0;
 }
