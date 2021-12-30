@@ -4,3 +4,4 @@
 * Makefile [[https://youtu.be/5rhAZyc7YAo]]
 * Cores e Vetores [[https://youtu.be/XctaCbkwUfs]]
 * Raios https://youtu.be/3wpeGBu8hcw
+* Desenhando círculo
