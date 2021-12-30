@@ -8,8 +8,8 @@ ray_color(ray ray)
 {
     vec3 unit_direction = vec3normalized(ray.direction);
     float t = 0.5*(unit_direction.y+1.0);
-    vec3 white = {1.,1.,1.};
-    vec3 blue = {0.5,0.7,1.};
+    color white = {1.,1.,1.};
+    color blue = {0.5,0.7,1.};
     return vec3sum(vec3multscalar(white, 1.0-t),vec3multscalar(blue, t));
 }
 
