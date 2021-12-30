@@ -3,9 +3,27 @@
 #include "color.h"
 #include "ray.h"
 
+int
+hit_sphere(point3 center,float radius, ray ray)
+{
+    vec3 oc = vec3sum(ray.origin, vec3multscalar(center, -1.0));
+    float a = vec3dot(ray.direction,ray.direction);
+    float b = 2.0 * vec3dot(oc, ray.direction);
+    float c = vec3dot(oc,oc) - radius*radius;
+    float discriminant = b*b-4*a*c;
+
+    return (discriminant>0);
+}
+
 color
 ray_color(ray ray)
 {
+    point3 center = {0.,0.,1.};
+    if(hit_sphere(center,0.5,ray))
+    {
+        color circle_color = {1.,0.,0.};
+        return circle_color;
+    }
     vec3 unit_direction = vec3normalized(ray.direction);
     float t = 0.5*(unit_direction.y+1.0);
     color white = {1.,1.,1.};
@@ -33,7 +51,7 @@ int main(int argc, char *argv[]) {
     point3 lower_left_corner =
         {
         origin.x-horizontal.x/2,
-        origin.y-vertical.x/2,
+        origin.y-vertical.y/2,
         -focal_length
     };
 
