@@ -4,8 +4,10 @@
 #
 all: raytracer output.ppm
 
+
+-include raytracer.d
 raytracer: raytracer.c
-	cc raytracer.c -lm -o raytracer
+	cc raytracer.c -lm -o raytracer -MMD
 
 .PHONY: run clean view
 
