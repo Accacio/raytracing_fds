@@ -5,3 +5,4 @@
 * Cores e Vetores [[https://youtu.be/XctaCbkwUfs]]
 * Raios https://youtu.be/3wpeGBu8hcw
 * Desenhando círculo
+* Desenhando normais da esfera
