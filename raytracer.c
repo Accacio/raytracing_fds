@@ -3,29 +3,40 @@
 #include "color.h"
 #include "ray.h"
 
-int
+float
 hit_sphere(point3 center,float radius, ray ray)
 {
     vec3 oc = vec3sum(ray.origin, vec3multscalar(center, -1.0));
-    float a = vec3dot(ray.direction,ray.direction);
-    float b = 2.0 * vec3dot(oc, ray.direction);
-    float c = vec3dot(oc,oc) - radius*radius;
-    float discriminant = b*b-4*a*c;
-
-    return (discriminant>0);
+    float a = vec3normsquared(ray.direction);
+    float half_b = vec3dot(oc, ray.direction);
+    float c = vec3normsquared(oc) - radius*radius;
+    float discriminant = half_b*half_b-a*c;
+    if(discriminant<0.)
+    {
+        return -1.0;
+    } else
+    {
+        return (-half_b-sqrt(discriminant))/a;
+    }
 }
 
 color
 ray_color(ray ray)
 {
-    point3 center = {0.,0.,1.};
-    if(hit_sphere(center,0.5,ray))
+    point3 center = {0.,0.,-1.};
+    float t = hit_sphere(center,0.5,ray);
+    if(t > 0)
     {
-        color circle_color = {1.,0.,0.};
-        return circle_color;
+        vec3 N = vec3normalized(vec3sum(rayat(ray, t),
+                                        vec3multscalar(center,-1.)));
+        N.x+=1;
+        N.y+=1;
+        N.z+=1;
+        N=vec3multscalar(N,0.5);
+        return N;
     }
     vec3 unit_direction = vec3normalized(ray.direction);
-    float t = 0.5*(unit_direction.y+1.0);
+    t = 0.5*(unit_direction.y+1.0);
     color white = {1.,1.,1.};
     color blue = {0.5,0.7,1.};
     return vec3sum(vec3multscalar(white, 1.0-t),vec3multscalar(blue, t));
