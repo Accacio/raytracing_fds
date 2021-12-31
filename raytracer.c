@@ -21,16 +21,12 @@ ray_color(ray _ray,hittable * world,int world_size,int depth)
 
         color attenuation;
         ray scattered;
-        if(lambertian_scatter(*(lambertian*) rec.material,&rec,_ray, &attenuation,&scattered))
+        if(material_scatter(rec.material,&rec,_ray, &attenuation,&scattered))
             return vec3multelementwise(attenuation, ray_color(scattered, world, world_size,depth-1));
         /* point3 temp1 = vec3sum(rec.p, rec.normal); */
         /* point3 target =vec3sum(temp1, vec3random_in_unit_sphere()); // hacky */
         /* point3 target =vec3sum(temp1, vec3random_unit_vector()); // Lambertian sphere */
         /* point3 target =vec3sum(rec.p, vec3random_in_hemisphere(rec.normal)); // alternate diffuse */
-        /* ray newray = {0}; */
-        /* newray.origin = rec.p; */
-        /* newray.direction = vec3sum(target, vec3multscalar(rec.p, -1)); */
-        /* return vec3multscalar(ray_color(newray, world, world_size,depth-1),0.5); */
         return (color) {0.,0.,0.};
     }
 
@@ -50,17 +46,23 @@ int main(int argc, char *argv[]) {
     int samples_per_pixel = 100;
     int max_depth = 20;
 
-    int world_size = 2;
+    int world_size = 4;
     hittable world[world_size];
 
-    lambertian lambertian1 = {0.};
-    lambertian1.albedo = (vec3){0.2,0.8,0.3};
+    lambertian material_ground =
+        create_lambertian((vec3){0.8,0.8,0.0});
+    lambertian material_center =
+        create_lambertian((vec3){0.7,0.3,0.3});
 
-    lambertian lambertian2 = {0.};
-    lambertian2.albedo = (vec3){0.8,0.8,0.0};
+    metal material_left =
+        create_metal((vec3){0.8,0.8,0.8},0.3);
+    metal material_right =
+        create_metal((vec3){0.8,0.6,0.2},1.0);
 
-    world[0] = (hittable) create_sphere((point3){0.,-100.5,-1.}, 100, (material*) &lambertian1);
-    world[1] = (hittable) create_sphere((point3){0.,0.,-1.}, .5, (material*) &lambertian2);
+    world[0] = (hittable) create_sphere((point3){0.,-100.5,-1.}, 100, (material*) &material_ground);
+    world[1] = (hittable) create_sphere((point3){0.,0.,-1.}, .5, (material*) &material_center);
+    world[2] = (hittable) create_sphere((point3){-1.,0.,-1.}, .5, (material*) &material_left);
+    world[3] = (hittable) create_sphere((point3){1.,0.,-1.}, .5, (material*) &material_right);
 
     /* Camera */
     camera camera = create_default_camera();

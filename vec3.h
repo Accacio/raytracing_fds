@@ -81,6 +81,13 @@ vec3dot(vec3 vec1, vec3 vec2)
 }
 
 vec3
+vec3reflect(vec3 v, vec3 n)
+{
+    return vec3sum(v, vec3multscalar(n,-2*vec3dot(v,n)));
+}
+
+
+vec3
 vec3random()
 {
     return (vec3){random_float(),random_float(),random_float()};
