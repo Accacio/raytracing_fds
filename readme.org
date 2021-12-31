@@ -6,3 +6,4 @@
 * Raios https://youtu.be/3wpeGBu8hcw
 * Desenhando círculo
 * Desenhando normais da esfera
+* Desenhando múltiplos objetos
