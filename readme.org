@@ -9,3 +9,4 @@
 * Desenhando múltiplos objetos
 * Corrigindo ordem dos objetos e refatorando
 * Camera e antialiasing
+* Materiais difusos
