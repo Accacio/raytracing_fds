@@ -7,3 +7,4 @@
 * Desenhando círculo
 * Desenhando normais da esfera
 * Desenhando múltiplos objetos
+* Corrigindo ordem dos objetos e refatorando
