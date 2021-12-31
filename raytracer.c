@@ -2,44 +2,24 @@
 #include "vec3.h"
 #include "color.h"
 #include "ray.h"
-
-float
-hit_sphere(point3 center,float radius, ray ray)
-{
-    vec3 oc = vec3sum(ray.origin, vec3multscalar(center, -1.0));
-    float a = vec3normsquared(ray.direction);
-    float half_b = vec3dot(oc, ray.direction);
-    float c = vec3normsquared(oc) - radius*radius;
-    float discriminant = half_b*half_b-a*c;
-    if(discriminant<0.)
-    {
-        return -1.0;
-    } else
-    {
-        return (-half_b-sqrt(discriminant))/a;
-    }
-}
+#include "hittable.h"
 
 color
-ray_color(ray ray)
+ray_color(ray ray,hittable * world,int world_size)
 {
-    point3 center = {0.,0.,-1.};
-    float t = hit_sphere(center,0.5,ray);
-    if(t > 0)
+    hit_record rec = {0.};
+    if(hittable_list_hit(world,world_size, ray,
+                         /* TODO use INFINITY */
+                         0,100000.,
+                         &rec))
     {
-        vec3 N = vec3normalized(vec3sum(rayat(ray, t),
-                                        vec3multscalar(center,-1.)));
-        N.x+=1;
-        N.y+=1;
-        N.z+=1;
-        N=vec3multscalar(N,0.5);
-        return N;
+        return vec3multscalar(vec3sumscalar(rec.normal,1),0.5);
     }
+
     vec3 unit_direction = vec3normalized(ray.direction);
-    t = 0.5*(unit_direction.y+1.0);
-    color white = {1.,1.,1.};
-    color blue = {0.5,0.7,1.};
-    return vec3sum(vec3multscalar(white, 1.0-t),vec3multscalar(blue, t));
+    float t = 0.5*(unit_direction.y+1.0);
+    return vec3sum(vec3multscalar((color){1.,1.,1.}, 1.0-t),
+        vec3multscalar((color) {0.5,0.7,1.}, t));
 }
 
 int main(int argc, char *argv[]) {
@@ -49,6 +29,12 @@ int main(int argc, char *argv[]) {
     float aspect_ratio = 16./9.;
     int width = 400;
     int height = (int) (width/aspect_ratio);
+
+
+    int world_size = 2;
+    hittable world[world_size];
+    world[0] = (hittable) create_sphere((point3){0.,-100.5,-1.}, 100);
+    world[1] = (hittable) create_sphere((point3){0.,0.,-1.}, .5);
 
     /* Camera */
     float viewport_height = 2.0;
@@ -80,12 +66,10 @@ int main(int argc, char *argv[]) {
             vec3 temp2 = vec3sum(temp1, vec3multscalar(vertical, v));
             vec3 temp3 = vec3sum(temp2, vec3multscalar(origin, -1.));
 
-            ray ray = {0};
-            ray.direction.x = temp3.x;
-            ray.direction.y = temp3.y;
-            ray.direction.z = temp3.z;
+            ray ray = {0.};
+            ray.direction = temp3;
 
-            color color = ray_color(ray);
+            color color = ray_color(ray,world,world_size);
             write_color(color);
         }
     }

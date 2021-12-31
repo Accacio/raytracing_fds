@@ -30,6 +30,12 @@ vec3multscalar(vec3 vec, float a)
 }
 
 vec3
+vec3sumscalar(vec3 vec, float a)
+{
+    return  (vec3) {a+vec.x,a+vec.y,a+vec.z};
+}
+
+vec3
 vec3sum(vec3 veca, vec3 vecb)
 {
     vec3 ret = {veca.x+vecb.x,veca.y+vecb.y,veca.z+vecb.z};
