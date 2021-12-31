@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
             ray.direction = temp3;
 
             color color = ray_color(ray,world,world_size);
-            write_color(color);
+            write_color(stdout,color);
         }
     }
     fprintf(stderr,"Done\n");
