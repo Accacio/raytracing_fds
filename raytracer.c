@@ -9,8 +9,7 @@ ray_color(ray ray,hittable * world,int world_size)
 {
     hit_record rec = {0.};
     if(hittable_list_hit(world,world_size, ray,
-                         /* TODO use INFINITY */
-                         0,100000.,
+                         0,INFINITY,
                          &rec))
     {
         return vec3multscalar(vec3sumscalar(rec.normal,1),0.5);
