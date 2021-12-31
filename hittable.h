@@ -99,13 +99,11 @@ hittable_list_hit(hittable * hit_list, int hit_list_size, ray ray, float t_min,f
         if(hittable_hit(current,ray,t_min,closest_so_far,&temp_rec))
         {
             hit_anything = 1;
-            /* TODO usar temp_rec */
-            closest_so_far = rec->t;
+            closest_so_far = temp_rec.t;
             *rec = temp_rec;
         }
     }
     return hit_anything;
 }
-
 
 #endif // HITTABLE_H_
