@@ -3,6 +3,8 @@
 #include "color.h"
 #include "ray.h"
 #include "hittable.h"
+#include "utils.h"
+#include "camera.h"
 
 color
 ray_color(ray ray,hittable * world,int world_size)
@@ -28,7 +30,7 @@ int main(int argc, char *argv[]) {
     float aspect_ratio = 16./9.;
     int width = 400;
     int height = (int) (width/aspect_ratio);
-
+    int samples_per_pixel = 100;
 
     int world_size = 2;
     hittable world[world_size];
@@ -36,40 +38,22 @@ int main(int argc, char *argv[]) {
     world[1] = (hittable) create_sphere((point3){0.,0.,-1.}, .5);
 
     /* Camera */
-    float viewport_height = 2.0;
-    float viewport_width = aspect_ratio*viewport_height;
-    float focal_length = 1.0;
-
-    point3 origin = {0.};
-    vec3 horizontal = {viewport_width,0.,0.};
-    vec3 vertical = {0.,viewport_height,0.};
-
-    point3 lower_left_corner =
-        {
-        origin.x-horizontal.x/2,
-        origin.y-vertical.y/2,
-        -focal_length
-    };
-
+    camera camera = create_default_camera();
     printf("%d %d 255\n",width,height);
 
     for (int i = height-1; i >= 0; i--) {
         fprintf(stderr,"Remaining %d\n",i);
         for (int j = 0; j < width; j++) {
 
-            float u,v;
-            u = ((double) j)/(width-1);
-            v = ((double) i)/(height-1);
+            color pixel_color = {0};
+            for (int s = 0; s < samples_per_pixel; s++) {
 
-            vec3 temp1 = vec3sum(lower_left_corner, vec3multscalar(horizontal, u));
-            vec3 temp2 = vec3sum(temp1, vec3multscalar(vertical, v));
-            vec3 temp3 = vec3sum(temp2, vec3multscalar(origin, -1.));
-
-            ray ray = {0.};
-            ray.direction = temp3;
-
-            color color = ray_color(ray,world,world_size);
-            write_color(stdout,color);
+                float u = ((double) j+random_float(0.,2.))/(width-1);
+                float v = ((double) i+random_float(0.,2.))/(height-1);
+                ray ray = camera_get_ray(camera,u,v);
+                pixel_color = vec3sum(pixel_color, ray_color(ray,world,world_size));
+            }
+            write_color(stdout,pixel_color,samples_per_pixel);
         }
     }
     fprintf(stderr,"Done\n");
