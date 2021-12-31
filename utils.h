@@ -3,11 +3,16 @@
 
 #include <stdlib.h>
 
+float
+random_float()
+{
+    return ((float) rand())/(RAND_MAX+1.0);
+}
 
 float
-random_float(float min, float max)
+random_float_min_max(float min, float max)
 {
-    return min + (max-min)*rand()/(RAND_MAX+1.0);
+    return min + (max-min)*random_float();
 }
 
 #endif // UTILS_H_

@@ -9,6 +9,10 @@ write_color(FILE *restrict __stream,color color,int samples)
 {
     int ir,ig,ib;
     color = vec3multscalar(color, (float) 1/samples);
+    color.r = sqrt(color.r);
+    color.g = sqrt(color.g);
+    color.b = sqrt(color.b);
+
     ir = (int) (color.r*255);
     ig = (int) (color.g*255);
     ib = (int) (color.b*255);

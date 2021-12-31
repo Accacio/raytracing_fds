@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include "utils.h"
 
 typedef struct vec3 {
     union {
@@ -66,6 +67,48 @@ vec3dot(vec3 vec1, vec3 vec2)
     return vec1.x*vec2.x+vec1.y*vec2.y+vec1.z*vec2.z;
 }
 
+vec3
+vec3random()
+{
+    return (vec3){random_float(),random_float(),random_float()};
+}
+
+vec3
+vec3random_min_max(float min, float max)
+{
+    return (vec3){
+    random_float_min_max(min,max),
+    random_float_min_max(min, max),
+    random_float_min_max(min, max)};
+}
+
+vec3
+vec3random_in_unit_sphere()
+{
+    while(1)
+    {
+        vec3 p = vec3random_min_max(-1., 1.);
+        if(vec3norm(p)>=1)
+            continue;
+        return  p;
+    }
+}
+
+vec3
+vec3random_unit_vector()
+{
+    return vec3normalized(vec3random_in_unit_sphere());
+}
+
+vec3
+vec3random_in_hemisphere(vec3 normal)
+{
+    vec3 in_unit_sphere = vec3random_in_unit_sphere();
+    if(vec3dot(in_unit_sphere, normal)>0.0)
+        return in_unit_sphere;
+    else
+        return vec3multscalar(in_unit_sphere, -1.);
+}
 
 void
 printvec3(FILE * restrict __stream,vec3 vec)
