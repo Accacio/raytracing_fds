@@ -3,12 +3,15 @@
 #include "vec3.h"
 #include "ray.h"
 
+typedef union _material material;
+
 typedef struct _hit_record
 {
     point3 p;
     vec3 normal;
     float t;
     int front_face;
+    material * material;
 } hit_record;
 
 void
@@ -23,6 +26,7 @@ typedef struct _sphere
     int type;
     point3 center;
     float radius;
+    material * material;
 } sphere;
 
 int
@@ -47,6 +51,7 @@ hit_sphere(sphere sphere, ray ray, float t_min, float t_max,hit_record * rec)
 
     rec->t = root;
     rec->p = rayat(ray, rec->t);
+    rec->material = sphere.material;
     vec3 outward_normal = vec3normalized(vec3sum(rec->p,
                                          vec3multscalar(sphere.center,-1.)));
     hit_set_face_normal(rec, ray, outward_normal);
@@ -56,12 +61,13 @@ hit_sphere(sphere sphere, ray ray, float t_min, float t_max,hit_record * rec)
 #define SPHERE 1
 
 sphere
-create_sphere(point3 center,float radius)
+create_sphere(point3 center,float radius, material * material)
 {
     sphere ret = {0.};
     ret.type = SPHERE;
     ret.center = center;
     ret.radius = radius;
+    ret.material = material;
     return ret;
 }
 
