@@ -10,3 +10,4 @@
 * Corrigindo ordem dos objetos e refatorando
 * Camera e antialiasing
 * Materiais difusos
+* Classe para usar materiais
