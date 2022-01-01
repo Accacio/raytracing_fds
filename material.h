@@ -75,10 +75,66 @@ metal_scatter (metal metal, hit_record *rec, ray _ray, color *attenuation,
   return 1;
 }
 
+typedef struct _dielectric
+{
+  int type;
+  float ir;
+} dielectric;
+
+#define DIELECTRIC 3
+
+dielectric
+create_dielectric (float ir)
+{
+  dielectric ret = { 0. };
+  ret.type = DIELECTRIC;
+  ret.ir = ir;
+  return ret;
+}
+
+float
+reflectance (float cos, float ir)
+{
+  float r0 = (1. - ir) / (1. + ir);
+  r0 *= r0;
+  return r0 + (1 - r0) * pow ((1 - cos), 5);
+}
+
+int
+dieletric_scatter (dielectric dielectric, hit_record *rec, ray _ray,
+                   color *attenuation, ray *scattered)
+{
+  *attenuation = (color) { 1., 1., 1. };
+  float refraction_ratio
+      = rec->front_face ? (1.0) / dielectric.ir : dielectric.ir;
+
+  vec3 unit_direction = vec3normalized (_ray.direction);
+  float cos_theta = fmin (
+      vec3dot (vec3multscalar (unit_direction, -1.0), rec->normal), 1.0);
+  float sin_theta = sqrt (1.0 - cos_theta * cos_theta);
+
+  int cannot_refract = refraction_ratio * sin_theta > 1.0;
+  vec3 direction = { 0. };
+  if (cannot_refract
+      || reflectance (cos_theta, refraction_ratio) > random_float ())
+    {
+      direction = vec3reflect (unit_direction, rec->normal);
+    }
+  else
+    {
+      direction = vec3refract (unit_direction, rec->normal, refraction_ratio);
+    }
+
+  *scattered = (ray) { rec->p, direction };
+  return 1;
+}
+
 typedef union _material
 {
   int type;
   lambertian lambertian;
+  metal metal;
+  dielectric dielectric;
 } material;
 
 int
@@ -94,6 +150,11 @@ material_scatter (material *material, hit_record *rec, ray _ray,
     case METAL:
       return metal_scatter (*(metal *) material, rec, _ray, attenuation,
                             scattered);
+      break;
+    case DIELECTRIC:
+      return dieletric_scatter (*(dielectric *) material, rec, _ray,
+                                attenuation, scattered);
+      break;
     default:
       return 0;
     }

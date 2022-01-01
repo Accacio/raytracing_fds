@@ -90,6 +90,18 @@ vec3reflect (vec3 v, vec3 n)
 }
 
 vec3
+vec3refract (vec3 uv, vec3 n, float etai_over_etat)
+{
+  float cos_theta = fmin (vec3dot (vec3multscalar (uv, -1.0), n), 1.0);
+  vec3 cos_theta_n = vec3multscalar (n, cos_theta);
+  vec3 r_out_perp = vec3multscalar (vec3sum (uv, cos_theta_n), etai_over_etat);
+  vec3 r_out_parallel = vec3multscalar (
+      n, -sqrt (fabsf ((float) 1. - vec3normsquared (r_out_perp))));
+  return vec3sum(r_out_perp,r_out_parallel);
+}
+
+
+vec3
 vec3random ()
 {
   return (vec3) { random_float (), random_float (), random_float () };

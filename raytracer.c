@@ -51,23 +51,27 @@ main (int argc, char *argv[])
   int samples_per_pixel = 100;
   int max_depth = 20;
 
-  int world_size = 4;
+  int world_size = 5;
   hittable world[world_size];
 
-  lambertian material_ground = create_lambertian ((vec3) { 0.8, 0.8, 0.0 });
-  lambertian material_center = create_lambertian ((vec3) { 0.7, 0.3, 0.3 });
-
-  metal material_left = create_metal ((vec3) { 0.8, 0.8, 0.8 }, 0.3);
-  metal material_right = create_metal ((vec3) { 0.8, 0.6, 0.2 }, 1.0);
+  material material_ground
+      = (material) create_lambertian ((vec3) { 0.8, 0.8, 0.0 });
+  material material_center
+      = (material) create_lambertian ((vec3) { 0.1, 0.2, 0.5 });
+  material material_left = (material) create_dielectric (1.5);
+  material material_right
+      = (material) create_metal ((vec3) { 0.8, 0.6, 0.2 }, .0);
 
   world[0] = (hittable) create_sphere ((point3) { 0., -100.5, -1. }, 100,
-                                       (material *) &material_ground);
+                                       &material_ground);
   world[1] = (hittable) create_sphere ((point3) { 0., 0., -1. }, .5,
-                                       (material *) &material_center);
-  world[2] = (hittable) create_sphere ((point3) { -1., 0., -1. }, .5,
-                                       (material *) &material_left);
-  world[3] = (hittable) create_sphere ((point3) { 1., 0., -1. }, .5,
-                                       (material *) &material_right);
+                                       &material_center);
+  world[3] = (hittable) create_sphere ((point3) { -1., 0., -1. }, .5,
+                                       &material_left);
+  world[2] = (hittable) create_sphere ((point3) { -1., 0., -1. }, -.3,
+                                       &material_left);
+  world[4] = (hittable) create_sphere ((point3) { 1., 0., -1. }, .5,
+                                       &material_right);
 
   /* Camera */
   camera camera = create_default_camera ();
