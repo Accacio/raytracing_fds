@@ -5,18 +5,16 @@
 
 typedef struct ray
 {
-    point3 origin;
-    vec3 direction;
+  point3 origin;
+  vec3 direction;
 
 } ray;
 
 point3
-rayat(ray ray,float t)
+rayat (ray ray, float t)
 {
-    point3 ret =
-        vec3sum(ray.origin,vec3multscalar(ray.direction, t));
-    return ret;
+  point3 ret = vec3sum (ray.origin, vec3multscalar (ray.direction, t));
+  return ret;
 }
-
 
 #endif // RAY_H_
