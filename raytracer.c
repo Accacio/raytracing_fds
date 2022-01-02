@@ -19,10 +19,15 @@ ray_color (ray _ray, hittable *world, int world_size, int depth)
 
       color attenuation;
       ray scattered;
-      if (material_scatter (rec.material, &rec, _ray, &attenuation,
-                            &scattered))
-        return vec3multelementwise (
-            attenuation, ray_color (scattered, world, world_size, depth - 1));
+      color emitted = material_emit(rec.material);
+      if (!material_scatter (rec.material, &rec, _ray, &attenuation,
+                             &scattered))
+      {
+        return emitted;
+      } else {
+        return vec3sum(emitted,vec3multelementwise (
+            attenuation, ray_color (scattered, world, world_size, depth - 1)));
+      }
       /* point3 temp1 = vec3sum(rec.p, rec.normal); */
       /* point3 target =vec3sum(temp1, vec3random_in_unit_sphere()); // hacky
        */
@@ -35,8 +40,9 @@ ray_color (ray _ray, hittable *world, int world_size, int depth)
 
   vec3 unit_direction = vec3normalized (_ray.direction);
   float t = 0.5 * (unit_direction.y + 1.0);
-  return vec3sum (vec3multscalar ((color) { 1., 1., 1. }, 1.0 - t),
-                  vec3multscalar ((color) { 0.5, 0.7, 1. }, t));
+  /* return vec3sum (vec3multscalar ((color) { 1., 1., 1. }, 1.0 - t), */
+  /*                 vec3multscalar ((color) { 0.5, 0.7, 1. }, t)); */
+  return (color) {0.,0.,0.};
 }
 
 int
@@ -49,22 +55,22 @@ main (int argc, char *argv[])
   int width = 400;
   int height = (int) (width / aspect_ratio);
   int samples_per_pixel = 100;
-  int max_depth = 20;
+  int max_depth = 5;
 
   int world_size = 5;
   hittable world[world_size];
 
   material material_ground
       = (material) create_lambertian ((vec3) { 0.8, 0.8, 0.0 });
-  material material_center
-      = (material) create_lambertian ((vec3) { 0.1, 0.2, 0.5 });
   material material_left = (material) create_dielectric (1.5);
+  material material_center = (material) create_diffuse_light((color) {1.,1.,1.});
+
   material material_right
-      = (material) create_metal ((vec3) { 0.8, 0.6, 0.2 }, .0);
+      = (material) create_metal ((vec3) { 0.8, 0.3, 0.2 }, .0);
 
   world[0] = (hittable) create_sphere ((point3) { 0., -100.5, -1. }, 100,
                                        &material_ground);
-  world[1] = (hittable) create_sphere ((point3) { 0., 0., -1. }, .5,
+  world[1] = (hittable) create_sphere ((point3) { 0., 200., -1. }, 100,
                                        &material_center);
   world[3] = (hittable) create_sphere ((point3) { -1., 0., -1. }, .5,
                                        &material_left);

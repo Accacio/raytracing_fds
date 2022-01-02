@@ -6,13 +6,19 @@
 
 #include "hittable.h"
 
+typedef enum
+{
+  LAMBERTIAN,
+  METAL,
+  DIELECTRIC,
+  DIFFUSE_LIGHT,
+} materials;
+
 typedef struct lambertian
 {
   int type;
   color albedo;
 } lambertian;
-
-#define LAMBERTIAN 1
 
 lambertian
 create_lambertian (color albedo)
@@ -47,8 +53,6 @@ typedef struct _metal
   float fuzz;
 } metal;
 
-#define METAL 2
-
 metal
 create_metal (color albedo, float fuzz)
 {
@@ -80,8 +84,6 @@ typedef struct _dielectric
   int type;
   float ir;
 } dielectric;
-
-#define DIELECTRIC 3
 
 dielectric
 create_dielectric (float ir)
@@ -129,12 +131,34 @@ dieletric_scatter (dielectric dielectric, hit_record *rec, ray _ray,
   return 1;
 }
 
+typedef struct _diffuse_light
+{
+  int type;
+  color emit;
+} diffuse_light;
+
+diffuse_light
+create_diffuse_light (color _color)
+{
+  diffuse_light ret = { 0. };
+  ret.type = DIFFUSE_LIGHT;
+  ret.emit = _color;
+  return ret;
+}
+
+color
+diffuse_emit (diffuse_light light)
+{
+  return light.emit;
+}
+
 typedef union _material
 {
   int type;
   lambertian lambertian;
   metal metal;
   dielectric dielectric;
+  diffuse_light diffuse_light;
 } material;
 
 int
@@ -157,6 +181,19 @@ material_scatter (material *material, hit_record *rec, ray _ray,
       break;
     default:
       return 0;
+    }
+}
+
+color
+material_emit (material *material)
+{
+  switch (material->type)
+    {
+    case DIFFUSE_LIGHT:
+      return diffuse_emit (*(diffuse_light *) material);
+      break;
+    default:
+      return (color) { 0., 0., 0. };
     }
 }
 
