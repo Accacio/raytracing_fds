@@ -92,16 +92,24 @@ hittable_hit (hittable hittable, ray ray, float t_min, float t_max,
     }
 }
 
+
+typedef struct _hittable_list
+{
+  hittable * data;
+  int size;
+} hittable_list;
+
+
 int
-hittable_list_hit (hittable *hit_list, int hit_list_size, ray ray, float t_min,
+hittable_list_hit (hittable_list *hit_list, ray ray, float t_min,
                    float t_max, hit_record *rec)
 {
   int hit_anything = 0;
   float closest_so_far = t_max;
   hit_record temp_rec;
-  for (int i = 0; i < hit_list_size; i++)
+  for (int i = 0; i < hit_list->size; i++)
     {
-      hittable current = hit_list[i];
+      hittable current = hit_list->data[i];
       if (hittable_hit (current, ray, t_min, closest_so_far, &temp_rec))
         {
           hit_anything = 1;
