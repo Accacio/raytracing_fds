@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <pthread.h>
 #include "vec3.h"
 #include "color.h"
 #include "ray.h"
@@ -10,7 +11,7 @@
 #include "image.h"
 
 color
-ray_color (ray _ray, hittable_list *world, int depth)
+ray_color (ray _ray, hittable_list *world, int depth, unsigned int *seed)
 {
   hit_record rec = { 0. };
   if (depth <= 0)
@@ -23,7 +24,7 @@ ray_color (ray _ray, hittable_list *world, int depth)
       ray scattered;
       color emitted = material_emit (rec.material);
       if (!material_scatter (rec.material, &rec, _ray, &attenuation,
-                             &scattered))
+                             &scattered, seed))
         {
           return emitted;
         }
@@ -31,8 +32,8 @@ ray_color (ray _ray, hittable_list *world, int depth)
         {
           return vec3sum (
               emitted,
-              vec3multelementwise (attenuation,
-                                   ray_color (scattered, world, depth - 1)));
+              vec3multelementwise (
+                  attenuation, ray_color (scattered, world, depth - 1, seed)));
         }
       /* point3 temp1 = vec3sum(rec.p, rec.normal); */
       /* point3 target =vec3sum(temp1, vec3random_in_unit_sphere()); // hacky
@@ -50,13 +51,13 @@ ray_color (ray _ray, hittable_list *world, int depth)
 }
 
 void
-render_image (image *image, int initial_height, int final_height,
-              int samples_per_pixel, camera camera, hittable_list *world,
-              int max_depth)
+render_image (unsigned int *seed, image *image, int initial_height,
+              int final_height, int samples_per_pixel, camera camera,
+              hittable_list *world, int max_depth)
 {
   for (int i = initial_height; i < final_height; i++)
     {
-      fprintf (stderr, "Remaining %d\n", image->height - 1 - i);
+      /* fprintf (stderr, "Remaining %d\n", image->height - 1 - i); */
       for (int j = 0; j < image->width; j++)
         {
           int cur = (i * image->width + j) * 3;
@@ -64,14 +65,14 @@ render_image (image *image, int initial_height, int final_height,
           for (int s = 0; s < samples_per_pixel; s++)
             {
 
-              float u = ((double) j + random_float_min_max (0., 2.))
+              float u = ((double) j + random_float_min_max (seed, 0., 2.))
                         / (image->width - 1);
               float v = 1.
-                        - ((double) i + random_float_min_max (0., 2.))
+                        - ((double) i + random_float_min_max (seed, 0., 2.))
                               / (image->height - 1);
               ray ray = camera_get_ray (camera, u, v);
-              pixel_color
-                  = vec3sum (pixel_color, ray_color (ray, world, max_depth));
+              pixel_color = vec3sum (pixel_color,
+                                     ray_color (ray, world, max_depth, seed));
             }
 
           write_color_to_buffer ((uint8_t *) image->data, cur, pixel_color,
@@ -80,15 +81,54 @@ render_image (image *image, int initial_height, int final_height,
     }
 }
 
+typedef struct _render_context
+{
+  unsigned int seed;
+  image *image;
+  int initial_height;
+  int final_height;
+  int samples_per_pixel;
+  camera camera;
+  hittable_list *world;
+  int max_depth;
+} render_context;
+
+render_context
+create_render_context (unsigned int seed, image *image, int initial_height,
+                       int final_height, int samples, camera camera,
+                       hittable_list *world, int max_depth)
+{
+  render_context ret = { 0 };
+  ret.seed = seed;
+  ret.image = image;
+  ret.initial_height = initial_height;
+  ret.final_height = final_height;
+  ret.samples_per_pixel = samples;
+  ret.camera = camera;
+  ret.world = world;
+  ret.max_depth = max_depth;
+  return ret;
+}
+
+void *
+routine (void *arg)
+{
+  render_context *context = (render_context *) arg;
+  render_image (&context->seed, context->image, context->initial_height,
+                context->final_height, context->samples_per_pixel,
+                context->camera, context->world, context->max_depth);
+  return NULL;
+}
+
 int
 main (int argc, char *argv[])
 {
 
   /* Image */
   float aspect_ratio = 16. / 9.;
-  int width = 400;
+  int width = 800;
   int height = (int) (width / aspect_ratio);
-  int samples_per_pixel = 10;
+  int samples_per_pixel = 100;
   int max_depth = 5;
 
   int world_size = 5;
@@ -130,11 +170,29 @@ main (int argc, char *argv[])
   image.width = width;
   image.height = height;
 
-  render_image (&image, 0, height, samples_per_pixel, camera, &world,
-                max_depth);
+  int nthreads = 200;
+  pthread_t pool[nthreads];
+  render_context context_list[nthreads];
+
+  for (int i = 0; i < nthreads; i++)
+    {
+      context_list[i] = create_render_context (
+          i, &image, i * height / nthreads, (i + 1) * height / nthreads,
+          samples_per_pixel, camera, &world, max_depth);
+    }
+
+  for (int i = 0; i < nthreads; i++)
+    {
+      pthread_create (&pool[i], NULL, routine, &context_list[i]);
+    }
+
+  for (int i = 0; i < nthreads; i++)
+    {
+      pthread_join (pool[i], NULL);
+    }
 
   fwrite (&buffer[0], sizeof (buffer), 1, stdout);
-  fprintf (stderr, "Done\n");
+  /* fprintf (stderr, "Done\n"); */
 
   return 0;
 }

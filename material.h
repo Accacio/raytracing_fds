@@ -31,9 +31,10 @@ create_lambertian (color albedo)
 
 int
 lambertian_scatter (lambertian lambertian, hit_record *rec, ray _ray,
-                    color *attenuation, ray *scattered)
+                    color *attenuation, ray *scattered, unsigned int *seed)
 {
-  vec3 scatter_direction = vec3sum (rec->normal, vec3random_unit_vector ());
+  vec3 scatter_direction
+      = vec3sum (rec->normal, vec3random_unit_vector (seed));
   if (vec3near_zero (scatter_direction))
     scatter_direction = rec->normal;
 
@@ -65,14 +66,15 @@ create_metal (color albedo, float fuzz)
 
 int
 metal_scatter (metal metal, hit_record *rec, ray _ray, color *attenuation,
-               ray *scattered)
+               ray *scattered, unsigned int *seed)
 {
   vec3 reflected = vec3reflect (vec3normalized (_ray.direction), rec->normal);
 
   ray newray = { 0. };
   newray.origin = rec->p;
-  newray.direction = vec3sum (
-      reflected, vec3multscalar (vec3random_in_unit_sphere (), metal.fuzz));
+  newray.direction
+      = vec3sum (reflected, vec3multscalar (vec3random_in_unit_sphere (seed),
+                                            metal.fuzz));
 
   *scattered = newray;
   *attenuation = metal.albedo;
@@ -104,7 +106,7 @@ reflectance (float cos, float ir)
 
 int
 dieletric_scatter (dielectric dielectric, hit_record *rec, ray _ray,
-                   color *attenuation, ray *scattered)
+                   color *attenuation, ray *scattered, unsigned int *seed)
 {
   *attenuation = (color) { 1., 1., 1. };
   float refraction_ratio
@@ -118,7 +120,7 @@ dieletric_scatter (dielectric dielectric, hit_record *rec, ray _ray,
   int cannot_refract = refraction_ratio * sin_theta > 1.0;
   vec3 direction = { 0. };
   if (cannot_refract
-      || reflectance (cos_theta, refraction_ratio) > random_float ())
+      || reflectance (cos_theta, refraction_ratio) > random_float (seed))
     {
       direction = vec3reflect (unit_direction, rec->normal);
     }
@@ -163,21 +165,21 @@ typedef union _material
 
 int
 material_scatter (material *material, hit_record *rec, ray _ray,
-                  color *attenuation, ray *scattered)
+                  color *attenuation, ray *scattered, unsigned int *seed)
 {
   switch (material->type)
     {
     case LAMBERTIAN:
       return lambertian_scatter (*(lambertian *) material, rec, _ray,
-                                 attenuation, scattered);
+                                 attenuation, scattered, seed);
       break;
     case METAL:
       return metal_scatter (*(metal *) material, rec, _ray, attenuation,
-                            scattered);
+                            scattered, seed);
       break;
     case DIELECTRIC:
       return dieletric_scatter (*(dielectric *) material, rec, _ray,
-                                attenuation, scattered);
+                                attenuation, scattered, seed);
       break;
     default:
       return 0;

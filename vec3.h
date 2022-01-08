@@ -97,30 +97,30 @@ vec3refract (vec3 uv, vec3 n, float etai_over_etat)
   vec3 r_out_perp = vec3multscalar (vec3sum (uv, cos_theta_n), etai_over_etat);
   vec3 r_out_parallel = vec3multscalar (
       n, -sqrt (fabsf ((float) 1. - vec3normsquared (r_out_perp))));
-  return vec3sum(r_out_perp,r_out_parallel);
+  return vec3sum (r_out_perp, r_out_parallel);
 }
 
-
 vec3
-vec3random ()
+vec3random (unsigned int *seed)
 {
-  return (vec3) { random_float (), random_float (), random_float () };
+  return (vec3) { random_float (seed), random_float (seed),
+                  random_float (seed) };
 }
 
 vec3
-vec3random_min_max (float min, float max)
+vec3random_min_max (unsigned int *seed, float min, float max)
 {
-  return (vec3) { random_float_min_max (min, max),
-                  random_float_min_max (min, max),
-                  random_float_min_max (min, max) };
+  return (vec3) { random_float_min_max (seed, min, max),
+                  random_float_min_max (seed, min, max),
+                  random_float_min_max (seed, min, max) };
 }
 
 vec3
-vec3random_in_unit_sphere ()
+vec3random_in_unit_sphere (unsigned int *seed)
 {
   while (1)
     {
-      vec3 p = vec3random_min_max (-1., 1.);
+      vec3 p = vec3random_min_max (seed, -1., 1.);
       if (vec3norm (p) >= 1)
         continue;
       return p;
@@ -128,15 +128,15 @@ vec3random_in_unit_sphere ()
 }
 
 vec3
-vec3random_unit_vector ()
+vec3random_unit_vector (unsigned int *seed)
 {
-  return vec3normalized (vec3random_in_unit_sphere ());
+  return vec3normalized (vec3random_in_unit_sphere (seed));
 }
 
 vec3
-vec3random_in_hemisphere (vec3 normal)
+vec3random_in_hemisphere (vec3 normal, unsigned int *seed)
 {
-  vec3 in_unit_sphere = vec3random_in_unit_sphere ();
+  vec3 in_unit_sphere = vec3random_in_unit_sphere (seed);
   if (vec3dot (in_unit_sphere, normal) > 0.0)
     return in_unit_sphere;
   else

@@ -7,7 +7,7 @@ all: raytracer output.ppm
 
 -include raytracer.d
 raytracer: raytracer.c
-	cc raytracer.c -lm -o raytracer -MMD
+	cc raytracer.c -lm -lpthread -o raytracer -MMD
 
 .PHONY: run clean view
 
