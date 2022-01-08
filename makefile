@@ -12,7 +12,7 @@ raytracer: raytracer.c
 .PHONY: run clean view
 
 output.ppm: raytracer
-	./raytracer > output.ppm
+	time ./raytracer > output.ppm
 
 run:
 	./raytracer
