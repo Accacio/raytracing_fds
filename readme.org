@@ -14,3 +14,4 @@
 * Metal!
 * Vidro
 * Fiat Lux / Luzes!
+* Usando buffer para aumentar performance
