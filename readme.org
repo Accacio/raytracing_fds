@@ -16,3 +16,4 @@
 * Fiat Lux / Luzes!
 * Usando buffer para aumentar performance
 * Dividindo imagem em diferentes partes
+* Threads
