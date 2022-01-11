@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <pthread.h>
+#include <unistd.h>
+#include <X11/Xlib.h>
 #include "vec3.h"
 #include "color.h"
 #include "ray.h"
@@ -124,10 +126,36 @@ int
 main (int argc, char *argv[])
 {
 
-  /* Image */
   float aspect_ratio = 16. / 9.;
   int width = 800;
   int height = (int) (width / aspect_ratio);
+
+  unsigned long mask = CWBackPixel | CWEventMask;
+  XSetWindowAttributes attributes = { 0 };
+  attributes.background_pixel = 0x6495ed;
+  attributes.event_mask = ButtonPressMask | ButtonReleaseMask;
+
+  Display *display = XOpenDisplay (NULL);
+  Window window = XCreateWindow (display, DefaultRootWindow (display), 0, 0,
+                                 width, height, 0, CopyFromParent, InputOutput,
+                                 CopyFromParent, mask, &attributes);
+
+  XMapWindow (display, window);
+
+  int running = 1;
+  while (running)
+    {
+      XEvent event;
+      while (XPending (display))
+        {
+          XNextEvent (display, &event);
+          if (event.type == ButtonRelease)
+            running = 0;
+        }
+    }
+
+#if 0
+  /* Image */
   int samples_per_pixel = 100;
   int max_depth = 5;
 
@@ -193,6 +221,6 @@ main (int argc, char *argv[])
 
   fwrite (&buffer[0], sizeof (buffer), 1, stdout);
   /* fprintf (stderr, "Done\n"); */
-
+#endif
   return 0;
 }

@@ -7,13 +7,13 @@ all: raytracer output.ppm
 
 -include raytracer.d
 raytracer: raytracer.c
-	cc raytracer.c -lm -lpthread -o raytracer -MMD
+	cc raytracer.c -lX11 -lm -lpthread -o raytracer -MMD
 
 .PHONY: run clean view
 
 output.ppm: raytracer
-	time ./raytracer > output.ppm
-
+	# time ./raytracer > output.ppm
+	./raytracer
 run:
 	./raytracer
 
