@@ -17,3 +17,4 @@
 * Usando buffer para aumentar performance
 * Dividindo imagem em diferentes partes
 * Threads
+* Criando Janelas no X11
