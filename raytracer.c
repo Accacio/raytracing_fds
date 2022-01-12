@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <X11/Xlib.h>
+#include <X11/keysym.h>
+#include <X11/Xatom.h>
 #include "vec3.h"
 #include "color.h"
 #include "ray.h"
@@ -153,14 +155,29 @@ main (int argc, char *argv[])
   unsigned long mask = CWBackPixel | CWEventMask;
   XSetWindowAttributes attributes = { 0 };
   attributes.background_pixel = 0x6495ed;
-  attributes.event_mask
-      = ButtonPressMask | ButtonReleaseMask;
+  attributes.event_mask = ButtonPressMask
+                          | ButtonReleaseMask | KeyPressMask
+                          | KeyReleaseMask;
 
   Display *display = XOpenDisplay (NULL);
   Window window = XCreateWindow (
       display, DefaultRootWindow (display), 0, 0, width,
       height, 0, CopyFromParent, InputOutput,
       CopyFromParent, mask, &attributes);
+
+  Atom wm_delete_window
+      = XInternAtom (display, "WM_DELETE_WINDOW", 0);
+  XSetWMProtocols (display, window, &wm_delete_window, 1);
+
+  Atom wm_window_type_utility = XInternAtom (
+      display, "_NET_WM_WINDOW_TYPE_UTILITY", 0);
+
+  Atom wm_window_type
+      = XInternAtom (display, "_NET_WM_WINDOW_TYPE", 0);
+  XChangeProperty (display, window, wm_window_type, XA_ATOM,
+                   32, PropModeReplace,
+                   (unsigned char *) &wm_window_type_utility,
+                   1);
 
   XMapWindow (display, window);
 
@@ -260,8 +277,27 @@ main (int argc, char *argv[])
       while (XPending (display))
         {
           XNextEvent (display, &event);
-          if (event.type == ButtonRelease)
-            running = 0;
+          switch (event.type)
+            {
+            case ButtonRelease:
+              break;
+            case KeyPress:
+              switch (XLookupKeysym (&event.xkey, 0))
+                {
+                case XK_Escape:
+                  running = 0;
+                  break;
+                default:
+                  break;
+                }
+            case ClientMessage:
+              if (event.xclient.data.l[0]
+                  == wm_delete_window)
+                running = 0;
+              break;
+            default:
+              break;
+            }
         }
 
       XPutImage (display, window, DefaultGC (display, 0),
