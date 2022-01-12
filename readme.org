@@ -18,3 +18,4 @@
 * Dividindo imagem em diferentes partes
 * Threads
 * Criando Janelas no X11
+* Adicionando imagem na janela
