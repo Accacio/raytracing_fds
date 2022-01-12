@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include "vec3.h"
 
+#define MAX(a,b) (a)>(b)? (a) : (b)
+
 void
 write_color (FILE *restrict __stream, color color, int samples)
 {
@@ -33,5 +35,39 @@ write_color_to_buffer (uint8_t *buffer, int cur, color color, int samples)
   buffer[cur++] = (uint8_t) (color.g * 255);
   buffer[cur] = (uint8_t) (color.b * 255);
 }
+
+void
+write_rgba_color_to_buffer (uint8_t *buffer, int cur, color color, int samples)
+{
+  int ir, ig, ib;
+  color = vec3multscalar (color, (float) 1 / samples);
+  color.r = sqrt (color.r);
+  color.g = sqrt (color.g);
+  color.b = sqrt (color.b);
+
+  buffer[cur++] = (uint8_t) (color.b * 255);
+  buffer[cur++] = (uint8_t) (color.g * 255);
+  buffer[cur++] = (uint8_t) (color.r * 255);
+  buffer[cur] = (uint8_t) (255);
+}
+
+void
+write_accum_rgba_color_to_buffer (uint8_t *buffer, int cur, color color, int samples)
+{
+  int ir, ig, ib;
+  color = vec3multscalar (color, (float) 1 / samples);
+  color.r = sqrt (color.r);
+  color.g = sqrt (color.g);
+  color.b = sqrt (color.b);
+
+  buffer[cur] = MAX(buffer[cur],(uint8_t) (color.b * 255));
+  cur++;
+  buffer[cur] = MAX(buffer[cur],(uint8_t) (color.g * 255));
+  cur++;
+  buffer[cur] = MAX(buffer[cur],(uint8_t) (color.r * 255));
+  cur++;
+  buffer[cur] = (uint8_t) (255);
+}
+
 
 #endif // COLOR_H_
