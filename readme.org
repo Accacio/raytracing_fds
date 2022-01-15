@@ -20,3 +20,4 @@
 * Criando Janelas no X11
 * Adicionando imagem na janela
 * Janela Flutuante
+* Reposicionando a Camera
