@@ -66,8 +66,9 @@ ray_color (ray _ray, hittable_list *world, int depth,
 void
 render_image (unsigned int *seed, image *image,
               int initial_height, int final_height,
-              int samples_per_pixel, camera camera,
-              hittable_list *world, int max_depth)
+              int samples_per_pass, int samples_per_pixel,
+              camera camera, hittable_list *world,
+              int max_depth)
 {
   for (int i = initial_height; i < final_height; i++)
     {
@@ -77,7 +78,7 @@ render_image (unsigned int *seed, image *image,
         {
           int cur = (i * image->width + j) * 4;
           color pixel_color = { 0 };
-          for (int s = 0; s < samples_per_pixel; s++)
+          for (int s = 0; s < samples_per_pass; s++)
             {
 
               float u
@@ -89,7 +90,7 @@ render_image (unsigned int *seed, image *image,
                            + random_float_min_max (seed, 0.,
                                                    2.))
                               / (image->height - 1);
-              ray ray = camera_get_ray (camera, u, v,seed);
+              ray ray = camera_get_ray (camera, u, v, seed);
               pixel_color = vec3sum (
                   pixel_color,
                   ray_color (ray, world, max_depth, seed));
@@ -97,7 +98,7 @@ render_image (unsigned int *seed, image *image,
 
           write_accum_rgba_color_to_buffer (
               (uint8_t *) image->data, cur, pixel_color,
-              samples_per_pixel);
+              samples_per_pass, samples_per_pixel);
         }
     }
 }
@@ -108,6 +109,7 @@ typedef struct _render_context
   image *image;
   int initial_height;
   int final_height;
+  int samples_per_pass;
   int samples_per_pixel;
   camera camera;
   hittable_list *world;
@@ -117,7 +119,8 @@ typedef struct _render_context
 render_context
 create_render_context (unsigned int seed, image *image,
                        int initial_height, int final_height,
-                       int samples, camera camera,
+                       int samples_per_pass,
+                       int samples_per_pixel, camera camera,
                        hittable_list *world, int max_depth)
 {
   render_context ret = { 0 };
@@ -125,7 +128,8 @@ create_render_context (unsigned int seed, image *image,
   ret.image = image;
   ret.initial_height = initial_height;
   ret.final_height = final_height;
-  ret.samples_per_pixel = samples;
+  ret.samples_per_pass = samples_per_pass;
+  ret.samples_per_pixel = samples_per_pixel;
   ret.camera = camera;
   ret.world = world;
   ret.max_depth = max_depth;
@@ -136,11 +140,11 @@ void *
 routine (void *arg)
 {
   render_context *context = (render_context *) arg;
-  render_image (&context->seed, context->image,
-                context->initial_height,
-                context->final_height,
-                context->samples_per_pixel, context->camera,
-                context->world, context->max_depth);
+  render_image (
+      &context->seed, context->image,
+      context->initial_height, context->final_height,
+      context->samples_per_pass, context->samples_per_pixel,
+      context->camera, context->world, context->max_depth);
   return NULL;
 }
 
@@ -198,8 +202,9 @@ main (int argc, char *argv[])
                       32, bytes_per_line);
 
   /* Image */
-  int samples_per_pixel = 1;
-  int max_depth = 5;
+  int samples_per_pixel = 0;
+  int samples_per_pass = 5;
+  int max_depth = 20;
 
   int world_size = 5;
   hittable objects[world_size];
@@ -258,8 +263,8 @@ main (int argc, char *argv[])
     {
       context_list[i] = create_render_context (
           i, &image, i * height / nthreads,
-          (i + 1) * height / nthreads, samples_per_pixel,
-          camera, &world, max_depth);
+          (i + 1) * height / nthreads, samples_per_pass,
+          samples_per_pixel, camera, &world, max_depth);
     }
 
   int running = 1;
@@ -271,7 +276,7 @@ main (int argc, char *argv[])
           context_list[i] = create_render_context (
               context_list[i].seed, &image,
               i * height / nthreads,
-              (i + 1) * height / nthreads,
+              (i + 1) * height / nthreads, samples_per_pass,
               samples_per_pixel, camera, &world, max_depth);
         }
 
@@ -338,6 +343,8 @@ main (int argc, char *argv[])
 
       XPutImage (display, window, DefaultGC (display, 0),
                  ximage, 0, 0, 0, 0, width, height);
+      samples_per_pixel += samples_per_pass;
+      printf("%d\n", samples_per_pixel);
     }
 
   return 0;
