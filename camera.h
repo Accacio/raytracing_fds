@@ -14,6 +14,35 @@ typedef struct _camera
 } camera;
 
 camera
+create_camera (point3 look_from, point3 look_at, vec3 vup,
+               float vfov, float aspect_ratio)
+{
+  float theta = degrees_to_radians (vfov);
+  float h = tanf (theta / 2);
+
+  float viewport_height = 2.0 * h;
+  float viewport_width = aspect_ratio * viewport_height;
+
+  vec3 w = vec3normalized (
+      vec3sum (look_from, vec3multscalar (look_at, -1.)));
+  vec3 u = vec3normalized (vec3cross (vup, w));
+  vec3 v = vec3cross (w, u);
+
+  camera ret = { 0 };
+  ret.origin = look_from;
+  ret.horizontal = vec3multscalar (u, viewport_width);
+  ret.vertical = vec3multscalar (v, viewport_height);
+
+  vec3 horzplusvert = vec3multscalar (
+      vec3sum (ret.horizontal, ret.vertical), -.5);
+  vec3 origplusw
+      = vec3sum (ret.origin, vec3multscalar (w, -1.));
+
+  ret.lower_left_corner = vec3sum (horzplusvert, origplusw);
+  return ret;
+}
+
+camera
 create_default_camera ()
 {
   float aspect_ratio = 16. / 9.;
@@ -29,18 +58,23 @@ create_default_camera ()
 
   ret.lower_left_corner
       = (vec3) { origin.x - ret.horizontal.x / 2,
-                 origin.y - ret.vertical.y / 2, -focal_length };
+                 origin.y - ret.vertical.y / 2,
+                 -focal_length };
   return ret;
 }
 
 ray
-camera_get_ray (camera camera, float u, float v)
+camera_get_ray (camera camera, float s, float t)
 {
-  vec3 temp1 = vec3sum (camera.lower_left_corner,
-                        vec3multscalar (camera.horizontal, u));
-  vec3 temp2 = vec3sum (temp1, vec3multscalar (camera.vertical, v));
-  vec3 temp3 = vec3sum (temp2, vec3multscalar (camera.origin, -1.));
+  vec3 temp1
+      = vec3sum (camera.lower_left_corner,
+                 vec3multscalar (camera.horizontal, s));
+  vec3 temp2 = vec3sum (
+      temp1, vec3multscalar (camera.vertical, t));
+  vec3 temp3 = vec3sum (
+      temp2, vec3multscalar (camera.origin, -1.));
   ray ray = { 0. };
+  ray.origin = camera.origin;
   ray.direction = temp3;
   return ray;
 }

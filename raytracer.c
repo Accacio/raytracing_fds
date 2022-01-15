@@ -157,7 +157,7 @@ main (int argc, char *argv[])
   attributes.background_pixel = 0x6495ed;
   attributes.event_mask = ButtonPressMask
                           | ButtonReleaseMask | KeyPressMask
-                          | KeyReleaseMask;
+                          | KeyReleaseMask | ResizeRedirectMask;
 
   Display *display = XOpenDisplay (NULL);
   Window window = XCreateWindow (
@@ -174,19 +174,20 @@ main (int argc, char *argv[])
 
   Atom wm_window_type
       = XInternAtom (display, "_NET_WM_WINDOW_TYPE", 0);
-  XChangeProperty (display, window, wm_window_type, XA_ATOM,
-                   32, PropModeReplace,
-                   (unsigned char *) &wm_window_type_utility,
-                   1);
+  XChangeProperty (
+      display, window, wm_window_type, XA_ATOM, 32,
+      PropModeReplace,
+      (unsigned char *) &wm_window_type_utility, 1);
 
   XMapWindow (display, window);
 
   int bytes_per_line = 4 * width;
-  uint8_t buffer[bytes_per_line * height];
+  int buffer_size = bytes_per_line * height;
+  uint8_t buffer[buffer_size];
 
   image image = { 0 };
   image.data = &buffer[0];
-  memset (image.data, 0, 4 * width * height);
+  memset (image.data, 0, buffer_size);
   image.width = width;
   image.height = height;
 
@@ -229,7 +230,9 @@ main (int argc, char *argv[])
       (point3) { 1., 0., -1. }, .5, &material_right);
 
   /* Camera */
-  camera camera = create_default_camera ();
+  camera camera = create_camera (
+      (point3) { -2., 2., 1. }, (point3) { 0., 0., -1. },
+      (vec3) { 0., 1., 0. }, 20, aspect_ratio);
 
   int nthreads = 20;
   pthread_t pool[nthreads];
@@ -279,6 +282,9 @@ main (int argc, char *argv[])
           XNextEvent (display, &event);
           switch (event.type)
             {
+            case ResizeRequest:
+              XResizeWindow(display, window, width, height);
+              break;
             case ButtonRelease:
               break;
             case KeyPress:
@@ -286,6 +292,25 @@ main (int argc, char *argv[])
                 {
                 case XK_Escape:
                   running = 0;
+                  break;
+                case XK_c:
+                  memset (image.data, 0, buffer_size);
+                  break;
+                case XK_h:
+                  camera.origin.x -= .1;
+                  memset (image.data, 0, buffer_size);
+                  break;
+                case XK_l:
+                  camera.origin.x += .1;
+                  memset (image.data, 0, buffer_size);
+                  break;
+                case XK_j:
+                  camera.origin.z -= .1;
+                  memset (image.data, 0, buffer_size);
+                  break;
+                case XK_k:
+                  camera.origin.z += .1;
+                  memset (image.data, 0, buffer_size);
                   break;
                 default:
                   break;

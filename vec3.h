@@ -42,7 +42,8 @@ vec3sumscalar (vec3 vec, float a)
 vec3
 vec3sum (vec3 veca, vec3 vecb)
 {
-  return (vec3) { veca.x + vecb.x, veca.y + vecb.y, veca.z + vecb.z };
+  return (vec3) { veca.x + vecb.x, veca.y + vecb.y,
+                  veca.z + vecb.z };
 }
 
 float
@@ -61,42 +62,60 @@ vec3
 vec3normalized (vec3 vec)
 {
   float norm = vec3norm (vec);
-  return (vec3) { vec.x / norm, vec.y / norm, vec.z / norm };
+  return (vec3) { vec.x / norm, vec.y / norm,
+                  vec.z / norm };
 }
 
 vec3
 vec3multelementwise (vec3 vec1, vec3 vec2)
 {
-  return (vec3) { vec1.x * vec2.x, vec1.y * vec2.y, vec1.z * vec2.z };
+  return (vec3) { vec1.x * vec2.x, vec1.y * vec2.y,
+                  vec1.z * vec2.z };
+}
+
+vec3
+vec3cross (vec3 vec1, vec3 vec2)
+{
+  return (vec3) {
+    vec1.y * vec2.z - vec1.z * vec2.y,
+    vec1.z * vec2.x - vec1.x * vec2.z,
+    vec1.x * vec2.y - vec1.y * vec2.x,
+  };
 }
 
 int
 vec3near_zero (vec3 vec)
 {
   float s = 1e-8;
-  return ((fabsf (vec.x) < s) && (fabsf (vec.y) < s) && fabsf (vec.z) < s);
+  return ((fabsf (vec.x) < s) && (fabsf (vec.y) < s)
+          && fabsf (vec.z) < s);
 }
 
 float
 vec3dot (vec3 vec1, vec3 vec2)
 {
-  return vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z;
+  return vec1.x * vec2.x + vec1.y * vec2.y
+         + vec1.z * vec2.z;
 }
 
 vec3
 vec3reflect (vec3 v, vec3 n)
 {
-  return vec3sum (v, vec3multscalar (n, -2 * vec3dot (v, n)));
+  return vec3sum (v,
+                  vec3multscalar (n, -2 * vec3dot (v, n)));
 }
 
 vec3
 vec3refract (vec3 uv, vec3 n, float etai_over_etat)
 {
-  float cos_theta = fmin (vec3dot (vec3multscalar (uv, -1.0), n), 1.0);
+  float cos_theta
+      = fmin (vec3dot (vec3multscalar (uv, -1.0), n), 1.0);
   vec3 cos_theta_n = vec3multscalar (n, cos_theta);
-  vec3 r_out_perp = vec3multscalar (vec3sum (uv, cos_theta_n), etai_over_etat);
+  vec3 r_out_perp = vec3multscalar (
+      vec3sum (uv, cos_theta_n), etai_over_etat);
   vec3 r_out_parallel = vec3multscalar (
-      n, -sqrt (fabsf ((float) 1. - vec3normsquared (r_out_perp))));
+      n, -sqrt (fabsf ((float) 1.
+                       - vec3normsquared (r_out_perp))));
   return vec3sum (r_out_perp, r_out_parallel);
 }
 
@@ -108,7 +127,8 @@ vec3random (unsigned int *seed)
 }
 
 vec3
-vec3random_min_max (unsigned int *seed, float min, float max)
+vec3random_min_max (unsigned int *seed, float min,
+                    float max)
 {
   return (vec3) { random_float_min_max (seed, min, max),
                   random_float_min_max (seed, min, max),
@@ -146,7 +166,8 @@ vec3random_in_hemisphere (vec3 normal, unsigned int *seed)
 void
 printvec3 (FILE *restrict __stream, vec3 vec)
 {
-  fprintf (__stream, "%.2f %.2f %.2f\n", vec.x, vec.y, vec.z);
+  fprintf (__stream, "%.2f %.2f %.2f\n", vec.x, vec.y,
+           vec.z);
 }
 
 #endif // VEC3_H_
