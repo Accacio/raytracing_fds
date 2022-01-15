@@ -21,3 +21,4 @@
 * Adicionando imagem na janela
 * Janela Flutuante
 * Reposicionando a Camera
+* Lentes e foco
