@@ -22,3 +22,4 @@
 * Janela Flutuante
 * Reposicionando a Camera
 * Lentes e foco
+* Corrige antialiasing
