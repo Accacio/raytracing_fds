@@ -148,6 +148,21 @@ vec3random_in_unit_sphere (unsigned int *seed)
 }
 
 vec3
+vec3random_in_unit_disk (unsigned int *seed)
+{
+  while (1)
+    {
+      vec3 p
+          = (vec3) { random_float_min_max (seed, -1., 1.),
+                     random_float_min_max (seed, -1., 1.),
+                     0. };
+      if (vec3norm (p) >= 1)
+        continue;
+      return p;
+    }
+}
+
+vec3
 vec3random_unit_vector (unsigned int *seed)
 {
   return vec3normalized (vec3random_in_unit_sphere (seed));

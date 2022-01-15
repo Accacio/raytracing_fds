@@ -89,7 +89,7 @@ render_image (unsigned int *seed, image *image,
                            + random_float_min_max (seed, 0.,
                                                    2.))
                               / (image->height - 1);
-              ray ray = camera_get_ray (camera, u, v);
+              ray ray = camera_get_ray (camera, u, v,seed);
               pixel_color = vec3sum (
                   pixel_color,
                   ray_color (ray, world, max_depth, seed));
@@ -155,9 +155,9 @@ main (int argc, char *argv[])
   unsigned long mask = CWBackPixel | CWEventMask;
   XSetWindowAttributes attributes = { 0 };
   attributes.background_pixel = 0x6495ed;
-  attributes.event_mask = ButtonPressMask
-                          | ButtonReleaseMask | KeyPressMask
-                          | KeyReleaseMask | ResizeRedirectMask;
+  attributes.event_mask
+      = ButtonPressMask | ButtonReleaseMask | KeyPressMask
+        | KeyReleaseMask | ResizeRedirectMask;
 
   Display *display = XOpenDisplay (NULL);
   Window window = XCreateWindow (
@@ -221,7 +221,9 @@ main (int argc, char *argv[])
   world.data[0] = (hittable) create_sphere (
       (point3) { 0., -100.5, -1. }, 100, &material_ground);
   world.data[1] = (hittable) create_sphere (
-      (point3) { 0., 200., -1. }, 100, &material_center);
+      (point3) { 0., 0., -1. }, .5, &material_center);
+  /* world.data[1] = (hittable) create_sphere ( */
+  /*     (point3) { 0., 200., -1. }, 100, &material_center); */
   world.data[3] = (hittable) create_sphere (
       (point3) { -1., 0., -1. }, .5, &material_left);
   world.data[2] = (hittable) create_sphere (
@@ -229,10 +231,18 @@ main (int argc, char *argv[])
   world.data[4] = (hittable) create_sphere (
       (point3) { 1., 0., -1. }, .5, &material_right);
 
+  point3 look_from = (vec3) { 3, 3, 2 };
+  point3 look_at = (vec3) { 0, 0, -1 };
+  vec3 vup = (vec3) { 0, 1, 0 };
+
+  float dist_to_focus = vec3norm (
+      vec3sum (look_from, vec3multscalar (look_at, -1)));
+  float aperture = .1;
+
   /* Camera */
-  camera camera = create_camera (
-      (point3) { -2., 2., 1. }, (point3) { 0., 0., -1. },
-      (vec3) { 0., 1., 0. }, 20, aspect_ratio);
+  camera camera = create_camera (look_from, look_at, vup,
+                                 20, aspect_ratio, aperture,
+                                 dist_to_focus);
 
   int nthreads = 20;
   pthread_t pool[nthreads];
@@ -283,7 +293,8 @@ main (int argc, char *argv[])
           switch (event.type)
             {
             case ResizeRequest:
-              XResizeWindow(display, window, width, height);
+              XResizeWindow (display, window, width,
+                             height);
               break;
             case ButtonRelease:
               break;
