@@ -97,7 +97,33 @@ typedef struct _hittable_list
 {
   hittable * data;
   int size;
+  int max_size;
 } hittable_list;
+
+
+void
+initialize_hittable_list (hittable_list * list,int max_size)
+{
+  list->size = 0;
+  list->max_size = max_size;
+  list->data = malloc(max_size*sizeof(hittable));
+}
+
+int
+hittable_list_add(hittable_list * list, hittable * hittable)
+{
+  if(list->size==list->max_size)
+    return 0;
+  list->data[list->size] = *hittable;
+  list->size++;
+  return 1;
+}
+
+void
+destroy_hittable_list (hittable_list * list)
+{
+  free(list->data);
+}
 
 
 int

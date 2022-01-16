@@ -148,12 +148,165 @@ routine (void *arg)
   return NULL;
 }
 
+hittable_list *
+create_random_world (unsigned int *seed)
+{
+  int world_size = 150;
+  hittable_list *world = malloc (sizeof (hittable_list));
+
+  initialize_hittable_list (world, world_size);
+
+  material *material_ground = malloc (sizeof (material));
+  *material_ground = (material) create_lambertian (
+      (vec3) { 0.5, 0.5, 0.0 });
+
+  hittable sph = (hittable) create_sphere (
+      (point3) { 0., -1000.5, 0. }, 1000, material_ground);
+  hittable_list_add (world, &sph);
+
+  material *material_sun = malloc (sizeof (material));
+  *material_sun = (material) create_diffuse_light (
+      (color) { 1., 1., 1. });
+
+  material *default_material = malloc (sizeof (material));
+  *default_material = (material) create_lambertian (
+      (color) { 0., .7, 0. });
+
+  hittable sph2 = (hittable) create_sphere (
+      (point3) { 0., 20000., -1. }, 10000, material_sun);
+
+  hittable_list_add (world, &sph2);
+
+  for (int i = -5; i < 5; i++)
+    {
+      for (int j = -5; j < 5; j++)
+        {
+          float choose_material = random_float (seed);
+          float radius
+              = random_float_min_max (seed, .2, .6);
+          point3 center = (point3) {
+            i * (1.2 + 0.5) + 0.9 * random_float (seed),
+            radius - .5,
+            j * (1.2 + 0.5) + 0.9 * random_float (seed)
+          };
+          if (vec3norm (
+                  vec3sum (center, (point3) { 4, 0.2, 0 }))
+              > 0.9)
+            {
+              if (choose_material < 0.5)
+                {
+                  material *default_material
+                      = malloc (sizeof (material));
+                  *default_material
+                      = (material) create_lambertian (
+                          (color) { random_float (seed),
+                                    random_float (seed),
+                                    random_float (seed) });
+
+                  sph = (hittable) create_sphere (
+                      center, radius, default_material);
+                  hittable_list_add (world, &sph);
+                }
+              else if (choose_material < 0.9)
+                {
+                  material *default_material
+                      = malloc (sizeof (material));
+                  *default_material
+                      = (material) create_metal (
+                          (color) { random_float (seed),
+                                    random_float (seed),
+                                    random_float (seed) },
+                          random_float_min_max (seed, 0.,
+                                                0.5));
+
+                  sph = (hittable) create_sphere (
+                      center, radius, default_material);
+                  hittable_list_add (world, &sph);
+                }
+              else
+                {
+                  material *default_material
+                      = malloc (sizeof (material));
+                  *default_material
+                      = (material) create_dielectric (1.5);
+                  sph = (hittable) create_sphere (
+                      center, radius, default_material);
+                  hittable_list_add (world, &sph);
+                }
+            }
+        }
+    }
+
+  return world;
+}
+
+hittable_list *
+create_default_world ()
+{
+  hittable_list *world = malloc (sizeof (hittable_list));
+  initialize_hittable_list (world, 5);
+
+  material *material_ground = malloc (sizeof (material));
+  *material_ground = (material) create_lambertian (
+      (vec3) { 0.8, 0.8, 0.0 });
+  material *material_left = malloc (sizeof (material));
+  *material_left = (material) create_dielectric (1.5);
+
+  material *material_left1 = malloc (sizeof (material));
+  *material_left1 = (material) create_dielectric (1.5);
+
+  material *material_center = malloc (sizeof (material));
+  *material_center = (material) create_diffuse_light (
+      (color) { 1., 1., 1. });
+
+  material *material_right = malloc (sizeof (material));
+  *material_right = (material) create_metal (
+      (vec3) { 0.8, 0.3, 0.2 }, .0);
+
+  hittable sph = (hittable) create_sphere (
+      (point3) { 0., -100.5, -1. }, 100, material_ground);
+  hittable_list_add (world, &sph);
+
+  sph = (hittable) create_sphere (
+      (point3) { 0., 200., -1. }, 100, material_center);
+  hittable_list_add (world, &sph);
+
+  sph = (hittable) create_sphere ((point3) { -1., 0., -1. },
+                                  .5, material_left);
+  hittable_list_add (world, &sph);
+
+  sph = (hittable) create_sphere ((point3) { -1., 0., -1. },
+                                  -.3, material_left1);
+  hittable_list_add (world, &sph);
+
+  sph = (hittable) create_sphere ((point3) { 1., 0., -1. },
+                                  .5, material_right);
+  hittable_list_add (world, &sph);
+
+  return world;
+}
+
+void
+destroy_world (hittable_list *world)
+{
+  // delete material
+  for (int i = 0; i < world->size; i++)
+    {
+      material *mat = (world->data[i]).sphere.material;
+      free (mat);
+    }
+  // delete object
+  free (world->data);
+  // delete world
+  free (world);
+}
+
 int
 main (int argc, char *argv[])
 {
 
-  float aspect_ratio = 16. / 9.;
-  int width = 800;
+  float aspect_ratio = 3. / 2.;
+  int width = 1200;
   int height = (int) (width / aspect_ratio);
 
   unsigned long mask = CWBackPixel | CWEventMask;
@@ -206,38 +359,13 @@ main (int argc, char *argv[])
   int samples_per_pass = 5;
   int max_depth = 20;
 
-  int world_size = 5;
-  hittable objects[world_size];
-  hittable_list world;
-  world.data = &objects[0];
-  world.size = world_size;
+  /* hittable_list *world = create_default_world (); */
 
-  material material_ground = (material) create_lambertian (
-      (vec3) { 0.8, 0.8, 0.0 });
-  material material_left
-      = (material) create_dielectric (1.5);
-  material material_center
-      = (material) create_diffuse_light (
-          (color) { 1., 1., 1. });
+  unsigned int seed = 1;
+  hittable_list *world = create_random_world (&seed);
 
-  material material_right = (material) create_metal (
-      (vec3) { 0.8, 0.3, 0.2 }, .0);
-
-  world.data[0] = (hittable) create_sphere (
-      (point3) { 0., -100.5, -1. }, 100, &material_ground);
-  world.data[1] = (hittable) create_sphere (
-      (point3) { 0., 0., -1. }, .5, &material_center);
-  /* world.data[1] = (hittable) create_sphere ( */
-  /*     (point3) { 0., 200., -1. }, 100, &material_center); */
-  world.data[3] = (hittable) create_sphere (
-      (point3) { -1., 0., -1. }, .5, &material_left);
-  world.data[2] = (hittable) create_sphere (
-      (point3) { -1., 0., -1. }, -.3, &material_left);
-  world.data[4] = (hittable) create_sphere (
-      (point3) { 1., 0., -1. }, .5, &material_right);
-
-  point3 look_from = (vec3) { 3, 3, 2 };
-  point3 look_at = (vec3) { 0, 0, -1 };
+  point3 look_from = (vec3) { 3, 5, 10 };
+  point3 look_at = (vec3) { -1, 0, -1 };
   vec3 vup = (vec3) { 0, 1, 0 };
 
   float dist_to_focus = vec3norm (
@@ -264,7 +392,7 @@ main (int argc, char *argv[])
       context_list[i] = create_render_context (
           i, &image, i * height / nthreads,
           (i + 1) * height / nthreads, samples_per_pass,
-          samples_per_pixel, camera, &world, max_depth);
+          samples_per_pixel, camera, world, max_depth);
     }
 
   int running = 1;
@@ -277,7 +405,7 @@ main (int argc, char *argv[])
               context_list[i].seed, &image,
               i * height / nthreads,
               (i + 1) * height / nthreads, samples_per_pass,
-              samples_per_pixel, camera, &world, max_depth);
+              samples_per_pixel, camera, world, max_depth);
         }
 
       for (int i = 0; i < nthreads; i++)
@@ -290,6 +418,9 @@ main (int argc, char *argv[])
         {
           pthread_join (pool[i], NULL);
         }
+
+      samples_per_pixel += samples_per_pass;
+      printf ("%d\n", samples_per_pixel);
 
       XEvent event;
       while (XPending (display))
@@ -311,22 +442,27 @@ main (int argc, char *argv[])
                   break;
                 case XK_c:
                   memset (image.data, 0, buffer_size);
+                  samples_per_pixel = 0;
                   break;
                 case XK_h:
                   camera.origin.x -= .1;
                   memset (image.data, 0, buffer_size);
+                  samples_per_pixel = 0;
                   break;
                 case XK_l:
                   camera.origin.x += .1;
                   memset (image.data, 0, buffer_size);
+                  samples_per_pixel = 0;
                   break;
                 case XK_j:
                   camera.origin.z -= .1;
                   memset (image.data, 0, buffer_size);
+                  samples_per_pixel = 0;
                   break;
                 case XK_k:
                   camera.origin.z += .1;
                   memset (image.data, 0, buffer_size);
+                  samples_per_pixel = 0;
                   break;
                 default:
                   break;
@@ -343,9 +479,8 @@ main (int argc, char *argv[])
 
       XPutImage (display, window, DefaultGC (display, 0),
                  ximage, 0, 0, 0, 0, width, height);
-      samples_per_pixel += samples_per_pass;
-      printf("%d\n", samples_per_pixel);
     }
 
+  destroy_world (world);
   return 0;
 }
